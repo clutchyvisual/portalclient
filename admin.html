@@ -215,36 +215,43 @@
         }
 
         async function searchFilesInDirectory(dirHandle, notFoundList, copiedCountRef, totalTarget) {
-            for await (const entry of dirHandle.values()) {
-                if (entry.kind === 'file') {
-                    // Gunakan base name untuk mencocokkan nama file di komputer dengan list target
-                    const fileBaseName = getBaseName(entry.name);
-                    const listIndex = notFoundList.findIndex(t => t === fileBaseName);
-                    
-                    if (listIndex !== -1) {
-                        addLog(`Menemukan: ${entry.name} (di folder /${dirHandle.name})`, "success");
-                        const file = await entry.getFile();
-                        const newFileHandle = await destHandle.getFileHandle(entry.name, { create: true });
-                        const writable = await newFileHandle.createWritable();
-                        await writable.write(file);
-                        await writable.close();
-                        
-                        copiedCountRef.count++;
-                        document.getElementById('progressText').innerText = `${copiedCountRef.count} / ${totalTarget} File Tercopy`;
-                        
-                        // Hapus dari list yang belum ditemukan
-                        notFoundList.splice(listIndex, 1);
-                    }
-                } else if (entry.kind === 'directory') {
-                    // Masuk ke sub-folder secara rekursif
-                    await searchFilesInDirectory(entry, notFoundList, copiedCountRef, totalTarget);
-                }
-                
-                // Jika semua file sudah ditemukan, hentikan pencarian (Hemat resource)
-                if (notFoundList.length === 0) return;
-            }
-        }
+    for await (const entry of dirHandle.values()) {
+        if (entry.kind === 'file') {
+            const fileBaseName = getBaseName(entry.name);
+            
+            // --- [AWAL KODE TAMBAHAN] ---
+            // Ambil format ekstensi dari file yang sedang dicek oleh sistem
+            const fileExt = entry.name.substring(entry.name.lastIndexOf('.')).toUpperCase();
+            // Cek apakah file ini adalah RAW atau ARW
+            const isRawFile = fileExt === '.RAW' || fileExt === '.ARW';
+            // --- [AKHIR KODE TAMBAHAN] ---
 
+            const listIndex = notFoundList.findIndex(t => t === fileBaseName);
+            
+            // Syaratnya ditambah: Nama harus cocok DAN formatnya wajib RAW/ARW
+            if (listIndex !== -1 && isRawFile) {
+                addLog(`Menemukan: ${entry.name} (di folder /${dirHandle.name})`, "success");
+                const file = await entry.getFile();
+                const newFileHandle = await destHandle.getFileHandle(entry.name, { create: true });
+                const writable = await newFileHandle.createWritable();
+                await writable.write(file);
+                await writable.close();
+                
+                copiedCountRef.count++;
+                document.getElementById('progressText').innerText = `${copiedCountRef.count} / ${totalTarget} File Tercopy`;
+                
+                // Hapus dari list yang belum ditemukan
+                notFoundList.splice(listIndex, 1);
+            }
+        } else if (entry.kind === 'directory') {
+            // Masuk ke sub-folder secara rekursif
+            await searchFilesInDirectory(entry, notFoundList, copiedCountRef, totalTarget);
+        }
+        
+        // Jika semua file sudah ditemukan, hentikan pencarian (Hemat resource)
+        if (notFoundList.length === 0) return;
+    }
+}
         async function processFiles() {
             if (!sourceHandle || !destHandle) {
                 alert("Harap pilih Folder Sumber dan Folder Tujuan terlebih dahulu!");
