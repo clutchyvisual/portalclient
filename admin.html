@@ -172,31 +172,32 @@
             return name.trim();
         }
 
-        // FUNGSI PARSER YANG SUDAH DILENGKAPI ANTI-KARAKTER GAIB WHATSAPP
+       // FUNGSI PARSER YANG SUDAH DILENGKAPI ANTI-KARAKTER GAIB & FILTER METADATA PORTAL
         function parseClientList(rawText) {
             let list = [];
             const lines = rawText.split('\n');
             
             for (let line of lines) {
-                // 1. PEMBERSIH SUPER: Hapus karakter gaib WhatsApp (Zero Width Space, Word Joiner, dll)
+                // 1. PEMBERSIH SUPER: Hapus karakter gaib WhatsApp
                 line = line.replace(/[\u200B-\u200D\uFEFF\u2060\u202A-\u202C]/g, '').trim();
                 
-                // Abaikan baris kosong atau metadata
+                // 2. FILTER METADATA: Abaikan baris kosong atau teks dari portal
                 if (!line || 
                     line.startsWith('=') || 
                     line.toUpperCase().includes('LAYANAN') || 
                     line.toUpperCase().includes('KLIEN') || 
                     line.toUpperCase().includes('TOTAL') || 
                     line.toUpperCase().includes('CATATAN') || 
-                    line.toUpperCase().includes('DICETAK')) {
+                    line.toUpperCase().includes('DICETAK') ||
+                    line.toUpperCase().includes('LIST FOTO') ||         // <-- Tambahan Baru
+                    line.toUpperCase().includes('DIKIRIM DARI')) {      // <-- Tambahan Baru
                     continue;
                 }
                 
-                // 2. Hapus angka urutan list (contoh: "1. Zidan" -> "Zidan")
-                // Regex diperkuat untuk mengabaikan simbol aneh setelah angka
+                // 3. Hapus angka urutan list (contoh: "1. Zidan" -> "Zidan")
                 let cleanName = line.replace(/^\d+[\.\-\)]\s*/, '').trim();
                 
-                // 3. Hapus ekstensi .jpg jika terbawa
+                // 4. Hapus ekstensi file (seperti .jpg, .jpeg, dll) jika terbawa
                 const dotIndex = cleanName.lastIndexOf('.');
                 if (dotIndex !== -1) {
                     cleanName = cleanName.substring(0, dotIndex);
@@ -211,7 +212,6 @@
             
             return [...new Set(list)]; 
         }
-
         // FUNGSI PENCARIAN YANG SUDAH DILENGKAPI FILTER .RAW & .ARW
         async function searchFilesInDirectory(dirHandle, notFoundList, copiedCountRef, totalTarget) {
             for await (const entry of dirHandle.values()) {
