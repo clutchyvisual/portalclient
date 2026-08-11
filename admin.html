@@ -79,7 +79,7 @@
             <!-- Panel Kanan: Input List -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col">
                 <h2 class="font-bold text-lg text-slate-800 border-b border-slate-100 pb-3 mb-4"><i class="fa-solid fa-paste mr-2 text-blue-600"></i> List Foto dari Klien</h2>
-             <textarea id="fileList" class="w-full flex-grow bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-600 outline-none transition resize-none font-mono shadow-inner" placeholder="Paste daftar nama file dari WhatsApp klien di sini...&#10;&#10;Contoh:&#10;=======================&#10;LAYANAN : PORTAL CLIENT&#10;KLIEN : VERA & WENDY&#10;TOTAL : 11 FOTO&#10;=======================&#10;&#10;1. WIJ07477&#10;2. WIJ07289&#10;   Catatan: Hapus jerawat"></textarea>
+                <textarea id="fileList" class="w-full flex-grow bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-600 outline-none transition resize-none font-mono shadow-inner" placeholder="Paste daftar nama file dari WhatsApp klien di sini...&#10;&#10;Contoh:&#10;=======================&#10;LAYANAN : PORTAL CLIENT&#10;KLIEN : VERA & WENDY&#10;TOTAL : 11 FOTO&#10;=======================&#10;&#10;1. WIJ07477&#10;2. WIJ07289&#10;    Catatan: Hapus jerawat"></textarea>
             </div>
         </div>
 
@@ -95,7 +95,7 @@
             </div>
             <div id="logOutput" class="log-container overflow-y-auto flex-grow text-xs leading-relaxed space-y-1">
                 <div class="text-slate-400">Sistem siap. Silakan pilih folder dan masukkan list foto.</div>
-             </div>
+            </div>
         </div>
 
     </main>
@@ -104,7 +104,7 @@
         <p class="text-sm text-slate-400">&copy; <script>document.write(new Date().getFullYear())</script> Auto RAW Sorter - Professional Tool.</p>
     </footer>
 
-   <!-- LOGIKA JAVASCRIPT -->
+    <!-- LOGIKA JAVASCRIPT -->
     <script>
         let sourceHandle = null;
         let destHandle = null;
@@ -172,7 +172,6 @@
             return name.trim();
         }
 
-       // FUNGSI PARSER YANG SUDAH DILENGKAPI ANTI-KARAKTER GAIB & FILTER METADATA PORTAL
         function parseClientList(rawText) {
             let list = [];
             const lines = rawText.split('\n');
@@ -181,22 +180,23 @@
                 // 1. PEMBERSIH SUPER: Hapus karakter gaib WhatsApp
                 line = line.replace(/[\u200B-\u200D\uFEFF\u2060\u202A-\u202C]/g, '').trim();
                 
-                // 2. FILTER METADATA: Abaikan baris kosong atau teks dari portal
+                // 2. FILTER METADATA: Abaikan baris kosong, catatan, atau teks dari portal
                 if (!line || 
                     line.startsWith('=') || 
                     line.toUpperCase().includes('LAYANAN') || 
                     line.toUpperCase().includes('KLIEN') || 
                     line.toUpperCase().includes('TOTAL') || 
+                    line.toUpperCase().includes('CATATAN') || 
                     line.toUpperCase().includes('DICETAK') ||
-                    line.toUpperCase().includes('LIST FOTO') ||         // <-- Tambahan Baru
-                    line.toUpperCase().includes('DIKIRIM DARI')) {      // <-- Tambahan Baru
+                    line.toUpperCase().includes('LIST FOTO') || 
+                    line.toUpperCase().includes('DIKIRIM DARI')) { 
                     continue;
                 }
                 
                 // 3. Hapus angka urutan list (contoh: "1. Zidan" -> "Zidan")
                 let cleanName = line.replace(/^\d+[\.\-\)]\s*/, '').trim();
                 
-                // 4. Hapus ekstensi file (seperti .jpg, .jpeg, dll) jika terbawa
+                // 4. Hapus ekstensi file jika terbawa
                 const dotIndex = cleanName.lastIndexOf('.');
                 if (dotIndex !== -1) {
                     cleanName = cleanName.substring(0, dotIndex);
@@ -211,14 +211,12 @@
             
             return [...new Set(list)]; 
         }
-        // FUNGSI PENCARIAN YANG SUDAH DILENGKAPI FILTER .RAW & .ARW
+
         async function searchFilesInDirectory(dirHandle, notFoundList, copiedCountRef, totalTarget) {
             for await (const entry of dirHandle.values()) {
                 if (entry.kind === 'file') {
                     const fileBaseName = getBaseName(entry.name);
                     
-                    // CEK EKSTENSI FILE: Pastikan ini file RAW atau ARW
-                    // (Juga saya tambahkan CR2/CR3/NEF buat jaga-jaga kalau ganti kamera)
                     let fileExt = "";
                     const dotIdx = entry.name.lastIndexOf('.');
                     if(dotIdx !== -1) {
@@ -228,7 +226,6 @@
 
                     const listIndex = notFoundList.findIndex(t => t === fileBaseName);
                     
-                    // Eksekusi HANYA JIKA nama cocok DAN formatnya RAW/ARW
                     if (listIndex !== -1 && isRawFile) {
                         addLog(`Menemukan: ${entry.name} (di folder /${dirHandle.name})`, "success");
                         const file = await entry.getFile();
