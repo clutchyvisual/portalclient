@@ -313,7 +313,6 @@
             <button id="lightboxSelectBtn" onclick="toggleLightboxSelect()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto">
                 <i class="fa-regular fa-square-check mr-2"></i> <span id="btnSelectText">Pilih Foto Ini</span>
             </button>
-            <textarea id="lightboxNote" oninput="saveNote()" data-i18n="notePlaceholder" class="w-full bg-slate-800/90 text-white placeholder-slate-400 text-sm rounded-xl p-3 border border-slate-600 focus:outline-none focus:border-slate-400 hidden transition-all shadow-lg backdrop-blur-sm" rows="2" placeholder="Catatan edit (opsional), misal: hapus jerawat..."></textarea>
         </div>
     </div>
 
@@ -344,7 +343,7 @@
                 folderTitle: "Sub-Folder Tersedia",
                 btnBackFolder: "Kembali",
                 galleryTitle: "Koleksi Foto",
-                galleryDesc: "Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar & tambah catatan.",
+                galleryDesc: "Klik gambar untuk memilih. Klik ikon 🔍 untuk perbesar gambar.",
                 sortDefault: "Urutan Asli",
                 sortRandom: "Acak (Random)",
                 btnReshuffle: "Acak Lagi",
@@ -386,7 +385,7 @@
                 folderTitle: "Available Sub-Folders",
                 btnBackFolder: "Go Back",
                 galleryTitle: "Photo Collection",
-                galleryDesc: "Click an image to select. Click 🔍 to zoom & add notes.",
+                galleryDesc: "Click an image to select. Click 🔍 to enlarge.",
                 sortDefault: "Original Order",
                 sortRandom: "Randomize",
                 btnReshuffle: "Shuffle Again",
@@ -876,15 +875,7 @@
                 
                 const badgeSize = isSmallGrid ? 'w-5 h-5 text-[10px]' : 'w-8 h-8 text-sm';
                 overlay.innerHTML = `<div class="check-badge bg-blue-600 text-white ${badgeSize} rounded-full flex items-center justify-center shadow-lg"><i class="fa-solid fa-check"></i></div>`;
-                
-                if (appState.notes[photo.id]) {
-                    const noteBadge = document.createElement('div');
-                    const rightPos = isSmallGrid ? 'right-8' : 'right-12';
-                    noteBadge.className = `note-badge absolute top-2 ${rightPos} bg-yellow-500 text-white ${badgeSize} rounded-full flex items-center justify-center shadow-md z-20 pointer-events-none`;
-                    noteBadge.innerHTML = '<i class="fa-solid fa-comment-dots"></i>';
-                    overlay.appendChild(noteBadge);
-                }
-
+            
                 const bottomArea = document.createElement('div');
                 const bottomPad = isSmallGrid ? 'p-1.5 pt-4' : 'p-3 pt-8';
                 const textSize = isSmallGrid ? 'text-[9px]' : 'text-xs';
@@ -994,10 +985,8 @@
             let textContent = `LIST FOTO PILIHAN KLIEN\n=======================\nLayanan : ${vendor}\nKlien   : ${appState.clientName || 'Klien'}\nTotal   : ${selectedPhotos.length} Foto\n=======================\n\n`;
             
             selectedPhotos.forEach((p, index) => {
-                const note = appState.notes[p.id];
                 textContent += `${index + 1}. ${p.name}\n`;
-                if (note) textContent += `   Catatan: ${note}\n`;
-            });
+                });
             
             textContent += `\n=======================\nDicetak otomatis melalui ${vendor} Portal\n`;
 
@@ -1017,10 +1006,8 @@
             
             let textToCopy = `*List Foto Pilihan Client*\nLayanan: ${vendor}\nKlien: *${appState.clientName}*\nTotal: ${selectedPhotos.length} Foto\n\n`;
             selectedPhotos.forEach((p, index) => {
-                const note = appState.notes[p.id];
                 textToCopy += `${index + 1}. ${p.name}\n`;
-                if (note) textToCopy += `   _Catatan: ${note}_\n`;
-            });
+                });
             textToCopy += `\n_Dikirim dari ${vendor} Portal_`;
 
             if (waNumber) {
@@ -1125,27 +1112,16 @@
 
         function updateLightboxSelectBtn() {
             const btn = document.getElementById('lightboxSelectBtn');
-            const noteArea = document.getElementById('lightboxNote');
             const langData = TRANSLATIONS[appState.lang];
             const isSelected = appState.selectedMap.has(currentZoomPhoto.id);
 
             if (isSelected) {
                 btn.innerHTML = `<i class="fa-solid fa-check mr-2"></i> <span id="btnSelectText">${langData.btnSelected}</span>`;
                 btn.className = "px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg w-full sm:w-auto";
-                noteArea.classList.remove('hidden'); noteArea.value = appState.notes[currentZoomPhoto.id] || '';
             } else {
                 btn.innerHTML = `<i class="fa-regular fa-square-check mr-2"></i> <span id="btnSelectText">${langData.btnSelect}</span>`;
                 btn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center justify-center shadow-lg border border-slate-600 w-full sm:w-auto";
-                noteArea.classList.add('hidden');
             }
-        }
-
-        function saveNote() {
-            if (!currentZoomPhoto) return;
-            const noteText = document.getElementById('lightboxNote').value.trim();
-            if (noteText) appState.notes[currentZoomPhoto.id] = noteText;
-            else delete appState.notes[currentZoomPhoto.id];
-            saveProgress(); 
         }
     </script>
 </body>
